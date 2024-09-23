@@ -7,9 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 /* Peter Dunbar
- * CS1450 (T/T)
- * March 3, 2023
- * Assignment 5
  * Takes values from a file and applys it to stacks. Using a generic class and methods this
  * code sorts the values, removes the smallest, finds a value and moves it to the bottom
  * of the stack.
