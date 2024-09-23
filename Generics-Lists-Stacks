@@ -1,0 +1,240 @@
+import java.io.File;
+import java.util.Stack;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/* Peter Dunbar
+ * CS1450 (T/T)
+ * March 3, 2023
+ * Assignment 5
+ * Takes values from a file and applys it to stacks. Using a generic class and methods this
+ * code sorts the values, removes the smallest, finds a value and moves it to the bottom
+ * of the stack.
+ */
+
+public class PeterDunbarAssignment5 {
+	public static void main(String[] args)throws IOException {
+		//Part 1
+		int[] numbers = {7, 2, 4, 3, 5, 1, 6, 8, 9};
+		Stack<Integer> simpleStack = new Stack<>();
+		for(int i = 0; i < numbers.length; i++) {
+			simpleStack.push(numbers[i]);
+		}
+		
+		removeOddValues (simpleStack);
+		System.out.printf("Stack after Odd are removed\n");
+	    while (!simpleStack.empty())
+	    {
+	    	System.out.printf("%d\n", simpleStack.peek());
+	    	simpleStack.pop();
+	    }
+	    
+	    //Part 2
+	    //Numbers File
+	    GenericStack<Integer> numberStack = new GenericStack<>(); 
+	    
+		File Numbers = new File("Numbers.txt");
+		Scanner inputFile = new Scanner(Numbers);
+		while(inputFile.hasNext()) {
+			int value = inputFile.nextInt();
+			numberStack.push(value);
+		}
+		
+		System.out.printf("Values read from file and pushed onto number stack: \n");
+		System.out.printf("_________________________________________________\n");
+		printStack(numberStack);
+		System.out.printf("Number Stack sorted - smallest to highest:\n");
+		System.out.printf("_____________________________________________\n");
+		sortStack(numberStack);
+		printStack(numberStack);
+		System.out.printf("___________\n");
+		removeSmallest(numberStack);
+		
+		Scanner userInput = new Scanner(System.in);
+		System.out.printf("Enter value to move to bottom of integer stack: ");
+		int numberInput = userInput.nextInt();
+		boolean valid = moveToBottom(numberStack, numberInput);
+		while(valid == false) {
+			System.out.printf("Enter value to move to bottom of integer stack: ");
+			numberInput = userInput.nextInt();
+			valid = moveToBottom(numberStack, numberInput);
+		}
+		printStack(numberStack);
+		
+		//String File
+	    GenericStack<String> lettersStack = new GenericStack<>(); 
+	    
+		File Strings = new File("Strings.txt");
+		Scanner inputFile2 = new Scanner(Strings);
+		while(inputFile2.hasNext()) {
+			String value2 = inputFile2.nextLine();
+			lettersStack.push(value2);
+		}
+		System.out.printf("Values read from file and pushed onto String stack: \n");
+		System.out.printf("_________________________________________________\n");
+		printStack(lettersStack);
+		System.out.printf("String Stack sorted - smallest to highest:\n");
+		System.out.printf("_____________________________________________\n");
+		sortStack(lettersStack);
+		printStack(lettersStack);
+		System.out.printf("___________\n");
+		removeSmallest(lettersStack);
+		
+		Scanner userInput2 = new Scanner(System.in);
+		System.out.printf("Enter value to move to bottom of String stack: ");
+		String letterInput = userInput2.nextLine();
+		boolean valid2 = moveToBottom(lettersStack, letterInput);
+		while(valid2 == false) {
+			System.out.printf("Enter value to move to bottom of String stack: ");
+			letterInput = userInput2.nextLine();
+			valid2 = moveToBottom(lettersStack, letterInput);
+		}
+		printStack(lettersStack);
+	}//main
+	
+	public static <E> void printStack(GenericStack<E> stack) {
+		GenericStack<E> temp = new GenericStack<>();
+		//Grabs values from stack and prints and pushes them onto a temp
+		while(!stack.isEmpty()) {
+			System.out.println(stack.peek());
+			temp.push(stack.peek());
+			stack.pop();
+		}
+		//puts info back into OG stack
+		while (!temp.isEmpty())
+	    {
+	        stack.push(temp.peek());
+	        temp.pop();
+	    }
+	}
+	
+	public static <E extends Comparable<E>> void sortStack(GenericStack<E> stack) {
+	    GenericStack<E> temp = new GenericStack<>();
+	    //Compares 1st value to second value and pushes to temp
+	    while(!stack.isEmpty()) {
+	        E holder = stack.peek();
+	        stack.pop();
+	        while(!temp.isEmpty() && temp.peek().compareTo(holder) == 1) {
+	            stack.push(temp.pop());
+	        }
+	        temp.push(holder);
+	    }
+	    //puts values back onto OG stack
+	    while(!temp.isEmpty()) {
+	        stack.push(temp.pop());
+	    }
+	}
+	
+	public static <E extends Comparable<E>> E removeSmallest(GenericStack<E> stack) {
+	    if (stack.isEmpty()) {
+	        return null;
+	    }
+	    //combs through and finds the smallest value. And pushes every other value onto temp
+	    E smallest = stack.pop();
+	    GenericStack<E> temp = new GenericStack<>();
+	    while (!stack.isEmpty()) {
+	        E current = stack.pop();
+	        if (current.compareTo(smallest) < 0) {
+	            temp.push(smallest);
+	            smallest = current;
+	        } else {
+	            temp.push(current);
+	        }
+	    }
+	    //pushes all wanted values back onto OG stack
+	    while (!temp.isEmpty()) {
+	        stack.push(temp.pop());
+	    }
+	    return smallest;
+	}
+	
+	public static <E> boolean moveToBottom(GenericStack<E> stack, E valueToMove) {
+	    GenericStack<E> temp = new GenericStack<>();
+	    boolean found = false;
+	    //first finds if value is there
+	    while(!stack.isEmpty()) {
+	        E element = stack.pop();
+	        if (element.equals(valueToMove)) {
+	            found = true;
+	        } else {
+	            temp.push(element);
+	        }
+	    }
+	    //if found it moves to bottom.
+	    if (found) {
+	        stack.push(valueToMove);
+	        while (!temp.isEmpty()) {
+	            stack.push(temp.pop());
+	        }
+	        return true;
+	    } else {
+	        return false;
+	    }
+	}
+
+	
+	public static void removeOddValues (Stack<Integer> stack) {
+		Stack<Integer> temp = new Stack<>();
+	    
+		//Finds non ood values and puts it on the temp
+	    while (!stack.empty())
+	    {
+	        int val = stack.peek();
+	        stack.pop();
+	        if (val % 2 == 0) {
+	            temp.push(val);
+	        }
+	    }
+	    //pushes all wanted values onto OG stack
+	    while (!temp.empty())
+	    {
+	        stack.push(temp.peek());
+	        temp.pop();
+	    }
+	}
+}//PeterDunbarAssignment5
+
+class GenericStack<E>{
+	private ArrayList<E> list;
+	public GenericStack() {
+		this.list = new ArrayList<>();
+	}
+	
+	public boolean isEmpty() {
+		if(list.isEmpty() == true) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	public int getSize() {
+		int counter = 0;
+		while(list != null) {
+			counter++;
+		}
+		return counter;
+	}
+	public E peek() {
+		int holder = 0;
+		for(int i = 0; i < list.size(); i++) {
+			holder++;
+		}
+		holder = holder - 1;
+		return list.get(holder);
+	}
+	public E pop() {
+		int holder = 0;
+		for(int i = 0; i < list.size(); i++) {
+			holder++;
+		}
+		holder = holder - 1;
+		return list.remove(holder);
+	}
+	public void push(E value) {
+		list.add(value);
+	}
+}//GenericStack
