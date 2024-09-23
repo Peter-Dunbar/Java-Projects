@@ -1,0 +1,360 @@
+import java.io.File;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.LinkedList; 
+
+public class PeterDunbarAssignment7 {
+	public static void main(String[] args)throws IOException {
+		//Ocean Object Setup
+		File Ocean = new File("Ocean7.txt");
+		Scanner inputFile = new Scanner(Ocean);
+		String name = inputFile.next();
+		int rows = inputFile.nextInt();
+		int cols = inputFile.nextInt();
+		String name2 = inputFile.next();
+		int rows2 = inputFile.nextInt();
+		int cols2 = inputFile.nextInt();
+		Ocean7 atlantic = new Ocean7(name, rows, cols);
+		Ocean7 pacific = new Ocean7(name2, rows2, cols2);
+		Canal panama = new Canal();
+		ControlCenter controlCenter = new ControlCenter();
+		
+		//Creates all Ship objects and loads them into the ocean
+		File Ship = new File("Ships7.txt");
+		Scanner inputFile2 = new Scanner(Ship);
+		while(inputFile2.hasNext()) {
+		    int shipRows = inputFile2.nextInt();
+		    int shipCols = inputFile2.nextInt();
+		    int capacity = inputFile2.nextInt();
+		    String classification = inputFile2.next();
+		    String shipName = inputFile2.nextLine();
+		    Ocean7Element ships = new Ship7(classification, capacity, shipName);
+		    atlantic.addElement(shipRows, shipCols, ships);
+		}
+		
+		//Loads all land Objects and moves them into the ocean
+		File Land = new File("Land7.txt");
+		Scanner inputFile3 = new Scanner(Land);
+		while(inputFile3.hasNext()) {
+		    int landRows = inputFile3.nextInt();
+		    int landCols = inputFile3.nextInt();
+		    Ocean7Element lands = new Land7();
+		    atlantic.addElement(landRows, landCols, lands);
+		}
+		
+		//Shows the map of the Ocean
+		atlantic.displayOcean();
+		
+		//moves all ships to other side
+		System.out.printf("\nController: Moving ships from ocean to channel that forms approach to the transit ways\n");
+		System.out.printf("______________________________________________________________________________________\n");
+		controlCenter.moveShipsIntoChannel(atlantic, panama);
+		System.out.printf("\nController: Moving ships waiting in the channel into transit ways\n");
+		System.out.printf("_________________________________________________________________\n");
+		controlCenter.moveShipsIntoTransitWays(panama);
+		System.out.printf("\nController: Moving ships from transit ways into Pacific Ocean\n");
+		System.out.printf("_____________________________________________________________\n");
+		controlCenter.moveShipsIntoPacificOcean(pacific, 2, 1, panama);
+		
+		//Shows the empty ocean and the now populated ocean
+		atlantic.displayOcean();
+		pacific.displayOcean();
+
+	}//Main
+}//Assignment7
+
+class Ocean7{
+	private String name;
+	private int numberRows;
+	private int numberCols;
+	private Ocean7Element[][] grid;
+	public Ocean7 (String name, int numberRows, int numberCols) {
+		this.name = name;
+		this.numberRows = numberRows;
+		this.numberCols = numberCols;
+		this.grid = new Ocean7Element[numberRows][numberCols];
+	}
+	
+	public int getRows() {
+		return numberRows;
+	}
+	public int getCols() {
+		return numberCols;
+	}
+	public String getName() {
+		return name;
+	}
+	
+	public void addElement (int row, int column, Ocean7Element element) {
+		grid[row][column] = element;
+	}
+	public Ocean7Element getElement (int row, int column) {
+		return grid[row][column];
+	}
+	public void displayOcean() {
+		System.out.printf("Loading Atlantic ocean grid with land and ships...\n\n");
+		
+		//Prints Col: label
+		System.out.printf("        ");
+		for(int k = 0; k < numberCols; k++) {
+			System.out.printf("Col %d:  ", k);
+		}
+		System.out.printf("\n");
+		
+		//Displays all parts of Ocean
+		for(int i = 0; i < numberRows; i++) {
+			//prints Row: label
+			System.out.printf("Row %d:  ", i);
+			for(int j = 0; j < numberCols; j++) {
+				if(grid[i][j] instanceof Land7) {
+					System.out.printf("%s  ", grid[i][j].getType());
+				}
+				else if(grid[i][j] instanceof Ship7) {
+					System.out.printf("%s  ", ((Ship7) grid[i][j]).getName());
+				}
+				else if(grid[i][j] == null) {
+					System.out.printf("^^^^^^  ");
+				}
+			}
+			System.out.printf("\n");
+		}
+	}
+	public void removeElement (int row, int column) {
+		grid[row][column] = null;
+	}
+}//Ocean
+
+class Ocean7Element{
+	private String type;
+	public Ocean7Element (String type) {
+		this.type = type;
+	}
+	
+	public String getType(){
+		return type;
+	}
+}//OceanElement
+
+class Ship7 extends Ocean7Element implements Comparable<Ship7>{
+	private String name;
+	private String classification; 
+	private int capacity;
+	public Ship7 (String classification, int capacity, String name) {
+		super ("ship");
+		this.classification = classification;
+		this.capacity = capacity;
+		this.name = name;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	public String getClassification() {
+		return classification;
+	}
+	public int getCapacity() {
+		return capacity;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s\t\t%s\t\t%d", classification, name, capacity);
+	}
+	@Override 
+	public int compareTo(Ship7 otherShip) {
+		int otherShipNum = 0;
+		int classNum = 0;
+		
+		//give order value
+		if(otherShip.getClassification().equals("Navy")) {
+			otherShipNum = 1;
+		}
+		else if(otherShip.getClassification().equals("Tanker")) {
+			otherShipNum = 2;
+		}
+		else if(otherShip.getClassification().equals("Cargo")) {
+			otherShipNum = 3;
+		}
+		else if(otherShip.getClassification().equals("Cruise")) {
+			otherShipNum = 4;
+		}
+		
+		//give order values
+		if(classification.equals("Navy")) {
+			classNum = 1;
+		}
+		else if(classification.equals("Tanker")) {
+			classNum = 2;
+		}
+		else if(classification.equals("Cargo")) {
+			classNum = 3;
+		}
+		else if(classification.equals("Cruise")) {
+			classNum = 4;
+		}
+		
+		//can now compare correctly
+		if(classNum < otherShipNum) {
+			return -1;
+		}
+		if(classNum == otherShipNum) {
+			return 0;
+		}
+		if(classNum > otherShipNum) {
+			return 1;
+		}
+		else {
+		return 0;
+		}
+	}
+}//Ship
+
+class Land7 extends Ocean7Element{
+	 public Land7() {
+		 super("Land");
+	 }
+}//Land
+
+class Canal {
+	private PriorityQueue<Ship7> channel;
+	private Queue<Ship7> transitWay1;
+	private Queue<Ship7> transitWay2;
+	public Canal() {
+		this.channel = new PriorityQueue<>();;
+		this.transitWay1 = new LinkedList<>();
+		this.transitWay2  = new LinkedList<>();
+	}
+	public boolean isChannelEmpty() {
+		if(channel.isEmpty()) {
+			return true;
+		}
+		else if(!channel.isEmpty()) {
+			return false;
+		}
+		else {
+			return false;
+		}
+	}
+	public void addShipToChannel(Ship7 newShip) {
+		channel.offer(newShip);
+	}
+	public Ship7 removeShipFromChannel() {
+		Ship7 temp = channel.element();
+		channel.remove();
+		return temp;
+	}
+	
+	//transitWay1
+	public boolean isTransitWay1Empty() {
+		if(transitWay1.isEmpty()) {
+			return true;
+		}
+		else if(!transitWay1.isEmpty()) {
+			return false;
+		}
+		else {
+			return false;
+		}
+	}
+	public void addShipToTransitWay1(Ship7 newShip) {
+		transitWay1.add(newShip);
+	}
+	public Ship7 removeShipFromTransitWay1() {
+		Ship7 temp = transitWay1.element();
+		transitWay1.remove();
+		return temp;
+	}
+	
+	//transitWay2
+	public boolean isTransitWay2Empty() {
+		if(transitWay2.isEmpty()) {
+			return true;
+		}
+		else if(!transitWay2.isEmpty()) {
+			return false;
+		}
+		else {
+			return false;
+		}
+	}
+	public void addShipToTransitWay2(Ship7 newShip) {
+		transitWay2.add(newShip);
+	}
+	public Ship7 removeShipFromTransitWay2() {
+		Ship7 temp = transitWay2.element();
+		transitWay2.remove();
+		return temp;
+	}
+}//canal
+
+class ControlCenter {
+	public void moveShipsIntoChannel (Ocean7 ocean, Canal canal) {
+		//from the last item on the array to the first
+		//it will grab ships and put them into a Channel
+		//of the canal and inform user
+	    for(int i = ocean.getRows() - 1; i >= 0; i--) {
+	        for(int j = ocean.getCols() - 1; j >= 0; j--) {
+	            if(ocean.getElement(i, j) instanceof Ship7) {
+	                canal.addShipToChannel((Ship7) ocean.getElement(i, j));
+	                Ship7 temp = (Ship7) ocean.getElement(i, j);
+	                System.out.printf("Moved into Channel: " + temp.toString() + "\n");
+	                ocean.removeElement(i, j);
+	            }
+	        }
+	    }
+	}
+	public void moveShipsIntoTransitWays (Canal canal) {
+		//move ships into the 
+		while(!canal.isChannelEmpty()) {
+			Ship7 holder = canal.removeShipFromChannel();
+			//Only Cruise ships are allowed into TransitWay1
+			if(holder.getClassification().equals("Cruise")) {
+				canal.addShipToTransitWay1(holder);
+				System.out.printf("Moved into TransitWay 1: " + holder.toString() + "\n");
+			}
+			else {
+				canal.addShipToTransitWay2(holder);
+				System.out.printf("Moved into TransitWay 2: " + holder.toString() + "\n");
+			}
+		}
+	}
+	public void moveShipsIntoPacificOcean (Ocean7 ocean, int row, int column, Canal canal) {
+		
+		// to count and start where the ships need to be placed
+		int starter = row;
+		//round robin pulling values and putting them into the ocean
+		while(!canal.isTransitWay1Empty() && !canal.isTransitWay1Empty()) {
+			Ship7 holder1 = canal.removeShipFromTransitWay1();
+			ocean.addElement(starter, column, holder1);
+			System.out.printf("Moved into pacific: " + holder1.toString() + "\n");
+			starter++;
+			Ship7 holder = canal.removeShipFromTransitWay2();
+			ocean.addElement(starter, column, holder);
+			System.out.printf("Moved into pacific: " + holder.toString() + "\n");
+			starter++;
+		}
+		
+		//make sure its empty
+		if(!canal.isTransitWay1Empty()) {
+			while(!canal.isTransitWay1Empty()) {
+				Ship7 holder1 = canal.removeShipFromTransitWay1();
+				ocean.addElement(starter, column, holder1);
+				System.out.printf("Moved into pacific: " + holder1.toString() + "\n");
+				starter++;
+			}
+		}
+		//make sure its empty
+		else if(!canal.isTransitWay2Empty()) {
+			while(!canal.isTransitWay2Empty()) {
+			Ship7 holder = canal.removeShipFromTransitWay2();
+			ocean.addElement(starter, column, holder);
+			System.out.printf("Moved into pacific: " + holder.toString() + "\n");
+			starter++;
+			}
+		}
+	}
+}
